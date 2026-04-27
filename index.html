@@ -1,0 +1,1760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GeoCore Solutions — Precision GIS Services</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Barlow+Condensed:wght@300;400;600;700;800&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0d0f;
+    --deep: #0f1419;
+    --panel: #141c22;
+    --surface: #1a2530;
+    --border: #243040;
+    --grid: #1e2d3a;
+    --accent: #00c9a7;
+    --accent2: #f5a623;
+    --accent3: #4a9eff;
+    --text: #c8d8e4;
+    --muted: #607080;
+    --white: #e8f0f5;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--ink);
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+  }
+
+  /* ─── MAP GRID BACKGROUND ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.25;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── TOPBAR ─── */
+  .topbar {
+    background: var(--deep);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    position: relative;
+    z-index: 100;
+  }
+  .topbar span { letter-spacing: 0.05em; }
+  .topbar .coords { color: var(--accent); }
+
+  /* ─── NAV ─── */
+  nav {
+    background: rgba(10, 13, 15, 0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    height: 64px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+  }
+  .logo-mark {
+    width: 38px;
+    height: 38px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .logo-mark svg { width: 100%; height: 100%; }
+  .logo-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    color: var(--white);
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+  .logo-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 2px;
+    list-style: none;
+    align-items: center;
+  }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 8px 14px;
+    border-radius: 3px;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .nav-links a:hover { color: var(--white); background: var(--surface); }
+  .nav-links a.active { color: var(--accent); }
+
+  .nav-cta {
+    background: var(--accent);
+    color: var(--ink) !important;
+    padding: 8px 20px !important;
+    font-weight: 700 !important;
+    border-radius: 2px;
+  }
+  .nav-cta:hover { background: #00e8c0 !important; color: var(--ink) !important; }
+
+  /* ─── HERO ─── */
+  .hero {
+    position: relative;
+    min-height: 88vh;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    padding: 80px 40px;
+  }
+
+  .hero-map-bg {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
+  /* Animated contour lines */
+  .hero-map-bg svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.12;
+  }
+
+  .hero-gradient {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 70% at 70% 50%, rgba(0,201,167,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 60% at 20% 80%, rgba(74,158,255,0.05) 0%, transparent 50%),
+      linear-gradient(135deg, rgba(10,13,15,0.9) 0%, rgba(10,13,15,0.5) 50%, rgba(10,13,15,0.85) 100%);
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 10;
+    max-width: 700px;
+  }
+
+  .hero-eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .hero-eyebrow::before {
+    content: '';
+    display: block;
+    width: 32px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .hero h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: clamp(52px, 7vw, 88px);
+    line-height: 0.92;
+    color: var(--white);
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+    margin-bottom: 28px;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+    display: block;
+  }
+
+  .hero-desc {
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--muted);
+    max-width: 520px;
+    margin-bottom: 40px;
+    font-weight: 400;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--ink);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 14px 32px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  }
+  .btn-primary:hover { background: #00e8c0; transform: translateY(-1px); }
+
+  .btn-secondary {
+    color: var(--text);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 14px 28px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    background: transparent;
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  .hero-stats {
+    position: absolute;
+    right: 40px;
+    bottom: 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 10;
+  }
+
+  .stat-item {
+    text-align: right;
+    border-right: 2px solid var(--accent);
+    padding-right: 16px;
+  }
+  .stat-num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 36px;
+    color: var(--white);
+    line-height: 1;
+  }
+  .stat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  /* ─── SECTION HEADERS ─── */
+  .section-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 48px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .section-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: clamp(32px, 4vw, 52px);
+    color: var(--white);
+    text-transform: uppercase;
+    line-height: 1;
+    letter-spacing: 0.01em;
+  }
+
+  /* ─── SERVICES SECTION ─── */
+  .services {
+    padding: 100px 40px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2px;
+  }
+
+  .service-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 32px 28px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+  .service-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 0;
+    background: var(--accent);
+    transition: height 0.3s;
+  }
+  .service-card:hover { background: var(--surface); transform: translateY(-2px); }
+  .service-card:hover::before { height: 100%; }
+
+  .service-card:nth-child(3n+2)::before { background: var(--accent2); }
+  .service-card:nth-child(3n+3)::before { background: var(--accent3); }
+
+  .service-icon {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 20px;
+    opacity: 0.7;
+  }
+
+  .service-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--white);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 10px;
+  }
+
+  .service-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .service-count {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--border);
+    letter-spacing: 0.05em;
+  }
+
+  /* ─── DATA CATEGORIES ─── */
+  .data-section {
+    padding: 80px 40px;
+    background: var(--deep);
+    position: relative;
+    z-index: 10;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-top: 48px;
+  }
+
+  .category-cell {
+    background: var(--panel);
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .category-cell:hover { background: var(--surface); }
+  .category-cell:hover .cat-icon { color: var(--accent); }
+
+  .cat-icon {
+    font-size: 28px;
+    transition: color 0.25s;
+    color: var(--muted);
+  }
+
+  .cat-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    line-height: 1.2;
+  }
+
+  .cat-count {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* ─── DELIVERABLES / OUTPUTS ─── */
+  .deliverables {
+    padding: 100px 40px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .deliverables-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: start;
+  }
+
+  .deliverables-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .deliverable-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+  .deliverable-item:hover { background: var(--surface); border-color: var(--accent); }
+
+  .deliverable-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--accent);
+    flex-shrink: 0;
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  }
+  .deliverable-item:nth-child(2n) .deliverable-dot { background: var(--accent2); }
+  .deliverable-item:nth-child(3n) .deliverable-dot { background: var(--accent3); }
+
+  .deliverable-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .deliverable-desc {
+    font-size: 12px;
+    color: var(--muted);
+    margin-left: auto;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* ─── FEATURED MAPS (portfolio strip) ─── */
+  .portfolio {
+    padding: 80px 40px;
+    background: var(--deep);
+    position: relative;
+    z-index: 10;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  .map-ticker {
+    display: flex;
+    gap: 2px;
+    margin-top: 48px;
+    overflow: hidden;
+  }
+
+  .map-thumb {
+    flex-shrink: 0;
+    width: 220px;
+    height: 160px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .map-thumb:hover { transform: scale(1.03); z-index: 5; border-color: var(--accent); }
+
+  .map-thumb-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 8px 10px;
+    background: linear-gradient(transparent, rgba(10,13,15,0.9));
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--text);
+    letter-spacing: 0.06em;
+  }
+
+  /* Map preview SVG placeholders */
+  .map-preview {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ─── REGIONAL MAPS ─── */
+  .regional {
+    padding: 100px 40px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .regional-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    margin-top: 48px;
+  }
+
+  .regional-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+  }
+  .regional-card:hover { border-color: var(--accent2); }
+  .regional-card:hover .regional-img { transform: scale(1.04); }
+
+  .regional-img-wrap {
+    height: 160px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+
+  .regional-img {
+    width: 100%;
+    height: 100%;
+    transition: transform 0.5s;
+  }
+
+  .regional-body {
+    padding: 24px 22px;
+  }
+
+  .regional-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--accent2);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .regional-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--white);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 8px;
+  }
+
+  .regional-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* ─── CONTACT / CTA ─── */
+  .cta-section {
+    padding: 100px 40px;
+    background: var(--deep);
+    border-top: 1px solid var(--border);
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .cta-section::before {
+    content: 'GIS';
+    position: absolute;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 28vw;
+    color: rgba(255,255,255,0.015);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    letter-spacing: -0.05em;
+    pointer-events: none;
+  }
+
+  .cta-content {
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .cta-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: clamp(40px, 5vw, 64px);
+    color: var(--white);
+    text-transform: uppercase;
+    line-height: 0.95;
+    margin-bottom: 20px;
+  }
+
+  .cta-sub {
+    font-size: 16px;
+    color: var(--muted);
+    margin-bottom: 40px;
+    line-height: 1.7;
+  }
+
+  .cta-form {
+    display: flex;
+    gap: 0;
+    max-width: 420px;
+    margin: 0 auto;
+  }
+
+  .cta-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-right: none;
+    color: var(--text);
+    font-family: 'Barlow', sans-serif;
+    font-size: 14px;
+    padding: 14px 18px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .cta-input::placeholder { color: var(--muted); }
+  .cta-input:focus { border-color: var(--accent); }
+
+  .cta-btn {
+    background: var(--accent);
+    color: var(--ink);
+    border: none;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 14px 24px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .cta-btn:hover { background: #00e8c0; }
+
+  /* ─── FOOTER ─── */
+  footer {
+    background: var(--ink);
+    border-top: 1px solid var(--border);
+    padding: 48px 40px 32px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 48px;
+  }
+
+  .footer-brand .logo-text { font-size: 20px; }
+  .footer-brand p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-top: 12px;
+    max-width: 280px;
+  }
+
+  .footer-col h4 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 16px;
+  }
+
+  .footer-col ul { list-style: none; }
+  .footer-col ul li { margin-bottom: 8px; }
+  .footer-col ul li a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    transition: color 0.2s;
+  }
+  .footer-col ul li a:hover { color: var(--text); }
+
+  .footer-bottom {
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-bottom p {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  .footer-coords {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+  }
+
+  /* ─── TICKER BAR ─── */
+  .ticker-bar {
+    background: var(--accent);
+    overflow: hidden;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    z-index: 10;
+  }
+
+  .ticker-inner {
+    display: flex;
+    white-space: nowrap;
+    animation: ticker 30s linear infinite;
+  }
+
+  .ticker-item {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--ink);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 0 40px;
+    text-transform: uppercase;
+  }
+  .ticker-sep {
+    color: rgba(0,0,0,0.3);
+  }
+
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* ─── ANIMATIONS ─── */
+  .fade-up {
+    opacity: 0;
+    transform: translateY(24px);
+    animation: fadeUp 0.7s ease forwards;
+  }
+  .fade-up:nth-child(1) { animation-delay: 0.1s; }
+  .fade-up:nth-child(2) { animation-delay: 0.2s; }
+  .fade-up:nth-child(3) { animation-delay: 0.3s; }
+  .fade-up:nth-child(4) { animation-delay: 0.4s; }
+  .fade-up:nth-child(5) { animation-delay: 0.5s; }
+  .fade-up:nth-child(6) { animation-delay: 0.6s; }
+
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Pulse dot */
+  .live-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    background: var(--accent);
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(0,201,167,0.4); }
+    50% { opacity: 0.8; transform: scale(1.2); box-shadow: 0 0 0 6px rgba(0,201,167,0); }
+  }
+
+  @media (max-width: 900px) {
+    .hero-stats { display: none; }
+    .deliverables-row { grid-template-columns: 1fr; }
+    .regional-grid { grid-template-columns: 1fr 1fr; }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+    nav { padding: 0 20px; }
+    .nav-links { display: none; }
+    .hero, .services, .deliverables, .regional, .cta-section { padding-left: 20px; padding-right: 20px; }
+  }
+
+  @media (max-width: 600px) {
+    .regional-grid { grid-template-columns: 1fr; }
+    .footer-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <span>GeoCore Solutions — Professional GIS Services</span>
+  <span class="coords"><span class="live-dot"></span>36.1°N 95.9°W — Fort Worth, TX</span>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="38" height="38" rx="2" stroke="#243040" stroke-width="1"/>
+        <path d="M20 4 L36 12 L36 28 L20 36 L4 28 L4 12 Z" stroke="#00c9a7" stroke-width="1.5" fill="none" opacity="0.6"/>
+        <circle cx="20" cy="20" r="6" stroke="#00c9a7" stroke-width="1.5" fill="none"/>
+        <line x1="20" y1="4" x2="20" y2="36" stroke="#243040" stroke-width="1"/>
+        <line x1="4" y1="20" x2="36" y2="20" stroke="#243040" stroke-width="1"/>
+        <circle cx="20" cy="20" r="2.5" fill="#00c9a7"/>
+      </svg>
+    </div>
+    <div>
+      <div class="logo-text">GeoCore</div>
+      <div class="logo-sub">Spatial Solutions</div>
+    </div>
+  </a>
+
+  <ul class="nav-links">
+    <li><a href="#services">Services</a></li>
+    <li><a href="#data">Data</a></li>
+    <li><a href="#deliverables">Deliverables</a></li>
+    <li><a href="#maps">Maps</a></li>
+    <li><a href="#regional">Regional</a></li>
+    <li><a href="#contact" class="nav-cta">Get a Quote</a></li>
+  </ul>
+</nav>
+
+<!-- TICKER -->
+<div class="ticker-bar">
+  <div class="ticker-inner">
+    <span class="ticker-item">Oil & Gas Mapping <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">Seismic Survey Analysis <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">Pipeline Routing & Permitting <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">Drone Aerial Mapping <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">Geodatabase Design <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">ArcGIS Online Development <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">Custom Map Publishing <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">Land & Lease Records <span class="ticker-sep">///</span></span>
+    <!-- repeat for seamless loop -->
+    <span class="ticker-item">Oil & Gas Mapping <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">Seismic Survey Analysis <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">Pipeline Routing & Permitting <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">Drone Aerial Mapping <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">Geodatabase Design <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">ArcGIS Online Development <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">Custom Map Publishing <span class="ticker-sep">///</span></span>
+    <span class="ticker-item">Land & Lease Records <span class="ticker-sep">///</span></span>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-map-bg">
+    <!-- Topographic SVG background -->
+    <svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <radialGradient id="glow" cx="60%" cy="50%">
+          <stop offset="0%" stop-color="#00c9a7" stop-opacity="0.15"/>
+          <stop offset="100%" stop-color="#00c9a7" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <!-- Contour lines mimicking topo map -->
+      <path d="M0,200 Q200,150 400,200 T800,180 T1200,200" fill="none" stroke="#00c9a7" stroke-width="0.8"/>
+      <path d="M0,250 Q200,200 400,250 T800,230 T1200,250" fill="none" stroke="#00c9a7" stroke-width="0.6"/>
+      <path d="M0,300 Q250,260 450,300 T850,280 T1200,300" fill="none" stroke="#4a9eff" stroke-width="0.8"/>
+      <path d="M0,350 Q250,310 450,350 T850,330 T1200,350" fill="none" stroke="#4a9eff" stroke-width="0.6"/>
+      <path d="M0,400 Q300,360 500,400 T900,380 T1200,400" fill="none" stroke="#00c9a7" stroke-width="0.8"/>
+      <path d="M0,450 Q300,410 500,450 T900,430 T1200,450" fill="none" stroke="#00c9a7" stroke-width="0.5"/>
+      <path d="M0,500 Q350,460 550,500 T950,480 T1200,500" fill="none" stroke="#4a9eff" stroke-width="0.7"/>
+      <path d="M0,550 Q350,510 550,550 T950,530 T1200,550" fill="none" stroke="#4a9eff" stroke-width="0.5"/>
+      <path d="M0,600 Q400,560 600,600 T1000,580 T1200,600" fill="none" stroke="#00c9a7" stroke-width="0.6"/>
+      <!-- Grid lines -->
+      <line x1="200" y1="0" x2="200" y2="800" stroke="#1e3040" stroke-width="0.8"/>
+      <line x1="400" y1="0" x2="400" y2="800" stroke="#1e3040" stroke-width="0.8"/>
+      <line x1="600" y1="0" x2="600" y2="800" stroke="#1e3040" stroke-width="0.8"/>
+      <line x1="800" y1="0" x2="800" y2="800" stroke="#1e3040" stroke-width="0.8"/>
+      <line x1="1000" y1="0" x2="1000" y2="800" stroke="#1e3040" stroke-width="0.8"/>
+      <!-- Section boundary lines -->
+      <rect x="520" y="120" width="180" height="120" fill="none" stroke="#f5a623" stroke-width="1.5" opacity="0.4"/>
+      <rect x="700" y="200" width="240" height="160" fill="none" stroke="#f5a623" stroke-width="1.5" opacity="0.3"/>
+      <!-- Well dots -->
+      <circle cx="560" cy="165" r="3" fill="#f5a623" opacity="0.7"/>
+      <circle cx="610" cy="180" r="3" fill="#f5a623" opacity="0.7"/>
+      <circle cx="650" cy="155" r="3" fill="#f5a623" opacity="0.7"/>
+      <circle cx="580" cy="210" r="3" fill="#f5a623" opacity="0.7"/>
+      <circle cx="720" cy="240" r="3" fill="#4a9eff" opacity="0.7"/>
+      <circle cx="760" cy="280" r="3" fill="#4a9eff" opacity="0.7"/>
+      <circle cx="800" cy="260" r="3" fill="#4a9eff" opacity="0.7"/>
+      <!-- Road-like diagonal -->
+      <line x1="400" y1="600" x2="1200" y2="100" stroke="#607080" stroke-width="1.5" opacity="0.5"/>
+      <line x1="0" y1="700" x2="800" y2="0" stroke="#607080" stroke-width="1" opacity="0.3"/>
+    </svg>
+    <div class="hero-gradient"></div>
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow fade-up">Precision Geospatial Intelligence</div>
+    <h1 class="fade-up">
+      Map The<br>
+      <em>World's</em><br>
+      Data.
+    </h1>
+    <p class="hero-desc fade-up">
+      Full-spectrum GIS services for oil & gas, energy, real estate, and government sectors. From seismic analysis to custom web applications — we turn raw spatial data into actionable intelligence.
+    </p>
+    <div class="hero-actions fade-up">
+      <a href="#services" class="btn-primary">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M7 0L14 7L7 14L0 7L7 0Z"/></svg>
+        Explore Services
+      </a>
+      <a href="#contact" class="btn-secondary">Request a Quote →</a>
+    </div>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-item">
+      <div class="stat-num">500+</div>
+      <div class="stat-label">Maps Delivered</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">25+</div>
+      <div class="stat-label">Service Types</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">12</div>
+      <div class="stat-label">States Covered</div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section class="services" id="services">
+  <div class="section-header">
+    <div>
+      <div class="section-label">What We Do</div>
+      <div class="section-title">Core Services</div>
+    </div>
+    <a href="#contact" class="btn-secondary">All Services →</a>
+  </div>
+
+  <div class="services-grid">
+    <!-- Card 1 -->
+    <div class="service-card fade-up">
+      <div class="service-count">01</div>
+      <svg class="service-icon" viewBox="0 0 44 44" fill="none" stroke="#00c9a7" stroke-width="1.5">
+        <circle cx="22" cy="22" r="18"/>
+        <path d="M22 4 L22 40 M4 22 L40 22"/>
+        <circle cx="22" cy="22" r="6" fill="none"/>
+        <circle cx="22" cy="22" r="2" fill="#00c9a7"/>
+      </svg>
+      <div class="service-title">Custom Mapping</div>
+      <div class="service-desc">High-quality large and small format maps for any scale. Topographic, aerial, thematic, and operational maps tailored to your project requirements.</div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="service-card fade-up">
+      <div class="service-count">02</div>
+      <svg class="service-icon" viewBox="0 0 44 44" fill="none" stroke="#f5a623" stroke-width="1.5">
+        <rect x="4" y="8" width="36" height="28" rx="2"/>
+        <path d="M4 16 L40 16"/>
+        <path d="M14 8 L14 36"/>
+        <path d="M10 22 L20 26 L28 20 L38 24"/>
+      </svg>
+      <div class="service-title">Oil & Gas GIS</div>
+      <div class="service-desc">Well locations, leasehold mapping, unit plans, A&D asset mapping, seismic 2D/3D analysis, SWD competitor and volume mapping.</div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="service-card fade-up">
+      <div class="service-count">03</div>
+      <svg class="service-icon" viewBox="0 0 44 44" fill="none" stroke="#4a9eff" stroke-width="1.5">
+        <path d="M8 36 L8 12 L22 4 L36 12 L36 36"/>
+        <path d="M4 36 L40 36"/>
+        <rect x="16" y="22" width="12" height="14"/>
+        <circle cx="22" cy="14" r="4"/>
+      </svg>
+      <div class="service-title">Pipeline & Utility</div>
+      <div class="service-desc">Pipeline routing, easement mapping, right-of-way acquisition, facility permitting, ownership maps, and utility/parcel cadastral mapping.</div>
+    </div>
+
+    <!-- Card 4 -->
+    <div class="service-card fade-up">
+      <div class="service-count">04</div>
+      <svg class="service-icon" viewBox="0 0 44 44" fill="none" stroke="#00c9a7" stroke-width="1.5">
+        <path d="M6 38 L14 20 L22 28 L30 16 L38 38"/>
+        <path d="M6 38 L38 38"/>
+        <path d="M6 30 L38 30" stroke-dasharray="3 3" opacity="0.5"/>
+        <path d="M6 22 L38 22" stroke-dasharray="3 3" opacity="0.5"/>
+      </svg>
+      <div class="service-title">Survey & Data Collection</div>
+      <div class="service-desc">GPS field mapping, drone terrain mapping, RTK coverage maps, field hazard mapping, and pre/post-plot seismic survey support.</div>
+    </div>
+
+    <!-- Card 5 -->
+    <div class="service-card fade-up">
+      <div class="service-count">05</div>
+      <svg class="service-icon" viewBox="0 0 44 44" fill="none" stroke="#f5a623" stroke-width="1.5">
+        <rect x="6" y="6" width="32" height="32" rx="3"/>
+        <circle cx="18" cy="18" r="5"/>
+        <line x1="22" y1="22" x2="32" y2="32"/>
+        <line x1="28" y1="6" x2="28" y2="38" stroke-dasharray="2 3" opacity="0.5"/>
+        <line x1="6" y1="28" x2="38" y2="28" stroke-dasharray="2 3" opacity="0.5"/>
+      </svg>
+      <div class="service-title">Web & App Development</div>
+      <div class="service-desc">ArcGIS Online setup, mobile/tablet/web GIS systems, custom application development, interactive web maps, and spatial data portals.</div>
+    </div>
+
+    <!-- Card 6 -->
+    <div class="service-card fade-up">
+      <div class="service-count">06</div>
+      <svg class="service-icon" viewBox="0 0 44 44" fill="none" stroke="#4a9eff" stroke-width="1.5">
+        <ellipse cx="22" cy="22" rx="18" ry="10"/>
+        <ellipse cx="22" cy="22" rx="18" ry="10" transform="rotate(60 22 22)"/>
+        <ellipse cx="22" cy="22" rx="18" ry="10" transform="rotate(120 22 22)"/>
+        <circle cx="22" cy="22" r="3" fill="#4a9eff"/>
+      </svg>
+      <div class="service-title">3D Modeling & Visualization</div>
+      <div class="service-desc">DEM contouring, elevation profiles, surface virtual tour videos and flyovers, drone terrain modeling, and 3D geological visualization.</div>
+    </div>
+
+    <!-- Card 7 -->
+    <div class="service-card fade-up">
+      <div class="service-count">07</div>
+      <svg class="service-icon" viewBox="0 0 44 44" fill="none" stroke="#00c9a7" stroke-width="1.5">
+        <path d="M10 34 L10 16 L22 10 L34 16 L34 34"/>
+        <path d="M6 34 L38 34"/>
+        <path d="M18 26 L18 34"/>
+        <path d="M26 22 L26 34"/>
+        <rect x="14" y="14" width="6" height="6" stroke-dasharray="1 1"/>
+        <rect x="24" y="14" width="6" height="6" stroke-dasharray="1 1"/>
+      </svg>
+      <div class="service-title">Data Conversion & CAD</div>
+      <div class="service-desc">Shapefile, geodatabase, KML/KMZ, and CAD conversion. Digitize scanned or paper maps, OCR processing, and georeferencing services.</div>
+    </div>
+
+    <!-- Card 8 -->
+    <div class="service-card fade-up">
+      <div class="service-count">08</div>
+      <svg class="service-icon" viewBox="0 0 44 44" fill="none" stroke="#f5a623" stroke-width="1.5">
+        <circle cx="16" cy="16" r="8"/>
+        <circle cx="30" cy="28" r="8"/>
+        <circle cx="16" cy="16" r="3" fill="#f5a623" opacity="0.5"/>
+        <circle cx="30" cy="28" r="3" fill="#f5a623" opacity="0.5"/>
+        <line x1="22" y1="22" x2="24" y2="24"/>
+      </svg>
+      <div class="service-title">Analysis & Intelligence</div>
+      <div class="service-desc">Location-allocation site selection, routing & network analysis, demographic analysis, sales trend mapping, SWD market analysis, and land use/slope analysis.</div>
+    </div>
+
+    <!-- Card 9 -->
+    <div class="service-card fade-up">
+      <div class="service-count">09</div>
+      <svg class="service-icon" viewBox="0 0 44 44" fill="none" stroke="#4a9eff" stroke-width="1.5">
+        <rect x="8" y="8" width="28" height="22" rx="2"/>
+        <path d="M8 18 L36 18"/>
+        <path d="M18 18 L18 30"/>
+        <circle cx="13" cy="13" r="2" fill="#4a9eff"/>
+        <circle cx="22" cy="13" r="2" fill="#4a9eff" opacity="0.5"/>
+        <path d="M16 36 L28 36 M22 30 L22 36"/>
+      </svg>
+      <div class="service-title">Geodatabase & Design</div>
+      <div class="service-desc">Custom geodatabase creation and maintenance, permit databases, data cleansing and scrubbing, custom database design, and GIS content creation.</div>
+    </div>
+  </div>
+</section>
+
+<!-- DATA CATEGORIES -->
+<section class="data-section" id="data">
+  <div class="section-header">
+    <div>
+      <div class="section-label">Spatial Data Infrastructure</div>
+      <div class="section-title">Data Categories</div>
+    </div>
+    <a href="#contact" class="btn-secondary">Browse All →</a>
+  </div>
+
+  <div class="categories-grid">
+    <a href="#" class="category-cell">
+      <span class="cat-icon">⬡</span>
+      <div class="cat-name">Oil & Gas</div>
+      <div class="cat-count">Wells · Units · Leases</div>
+    </a>
+    <a href="#" class="category-cell">
+      <span class="cat-icon">◈</span>
+      <div class="cat-name">Boundaries</div>
+      <div class="cat-count">County · State · Township</div>
+    </a>
+    <a href="#" class="category-cell">
+      <span class="cat-icon">△</span>
+      <div class="cat-name">Elevation</div>
+      <div class="cat-count">DEM · Contour · LiDAR</div>
+    </a>
+    <a href="#" class="category-cell">
+      <span class="cat-icon">◎</span>
+      <div class="cat-name">Imagery</div>
+      <div class="cat-count">Aerial · Ortho · Drone</div>
+    </a>
+    <a href="#" class="category-cell">
+      <span class="cat-icon">⬜</span>
+      <div class="cat-name">Cadastral</div>
+      <div class="cat-count">Parcels · Plats · Land</div>
+    </a>
+    <a href="#" class="category-cell">
+      <span class="cat-icon">≋</span>
+      <div class="cat-name">Seismic</div>
+      <div class="cat-count">2D · 3D · Pre/Post Plot</div>
+    </a>
+    <a href="#" class="category-cell">
+      <span class="cat-icon">⌀</span>
+      <div class="cat-name">Pipeline</div>
+      <div class="cat-count">Routing · Easements · ROW</div>
+    </a>
+    <a href="#" class="category-cell">
+      <span class="cat-icon">⊞</span>
+      <div class="cat-name">Transportation</div>
+      <div class="cat-count">Roads · Routes · Networks</div>
+    </a>
+    <a href="#" class="category-cell">
+      <span class="cat-icon">◑</span>
+      <div class="cat-name">Environment</div>
+      <div class="cat-count">Species · Habitat · Land Use</div>
+    </a>
+    <a href="#" class="category-cell">
+      <span class="cat-icon">⬟</span>
+      <div class="cat-name">Geoscientific</div>
+      <div class="cat-count">Geology · Formations</div>
+    </a>
+    <a href="#" class="category-cell">
+      <span class="cat-icon">◉</span>
+      <div class="cat-name">Location</div>
+      <div class="cat-count">Geocoding · Address</div>
+    </a>
+    <a href="#" class="category-cell">
+      <span class="cat-icon">⊟</span>
+      <div class="cat-name">Utilities</div>
+      <div class="cat-count">Poles · Pipes · Facilities</div>
+    </a>
+    <a href="#" class="category-cell">
+      <span class="cat-icon">〰</span>
+      <div class="cat-name">Water</div>
+      <div class="cat-count">NHD · SWD · Hydrology</div>
+    </a>
+    <a href="#" class="category-cell">
+      <span class="cat-icon">⊕</span>
+      <div class="cat-name">Society</div>
+      <div class="cat-count">Demographics · Census</div>
+    </a>
+    <a href="#" class="category-cell">
+      <span class="cat-icon">▣</span>
+      <div class="cat-name">Structure</div>
+      <div class="cat-count">Buildings · Footprints</div>
+    </a>
+    <a href="#" class="category-cell">
+      <span class="cat-icon">◇</span>
+      <div class="cat-name">Minerals</div>
+      <div class="cat-count">Rights · Appraisal · Tax</div>
+    </a>
+  </div>
+</section>
+
+<!-- DELIVERABLES -->
+<section class="deliverables" id="deliverables">
+  <div class="section-header">
+    <div>
+      <div class="section-label">Output Formats</div>
+      <div class="section-title">Deliverables</div>
+    </div>
+  </div>
+
+  <div class="deliverables-row">
+    <div>
+      <p style="font-size:15px; line-height:1.8; color:var(--muted); margin-bottom:32px;">
+        Every project is delivered in the format that best serves your workflow — from print-ready PDFs to live web applications. We support all major GIS platforms and can convert between any format.
+      </p>
+      <div class="deliverables-list">
+        <div class="deliverable-item">
+          <div class="deliverable-dot"></div>
+          <div class="deliverable-name">Traditional & Layered PDFs</div>
+          <div class="deliverable-desc">Print-ready</div>
+        </div>
+        <div class="deliverable-item">
+          <div class="deliverable-dot"></div>
+          <div class="deliverable-name">Shapefiles with Attributes</div>
+          <div class="deliverable-desc">.shp / .dbf</div>
+        </div>
+        <div class="deliverable-item">
+          <div class="deliverable-dot"></div>
+          <div class="deliverable-name">Google Earth KML / KMZ</div>
+          <div class="deliverable-desc">With attributes</div>
+        </div>
+        <div class="deliverable-item">
+          <div class="deliverable-dot"></div>
+          <div class="deliverable-name">Geodatabase (FGDB / PGDB)</div>
+          <div class="deliverable-desc">Esri native</div>
+        </div>
+        <div class="deliverable-item">
+          <div class="deliverable-dot"></div>
+          <div class="deliverable-name">ArcGIS Online Package</div>
+          <div class="deliverable-desc">+ App builds</div>
+        </div>
+        <div class="deliverable-item">
+          <div class="deliverable-dot"></div>
+          <div class="deliverable-name">Desktop Runtime Maps</div>
+          <div class="deliverable-desc">.mmpk / .mpk</div>
+        </div>
+        <div class="deliverable-item">
+          <div class="deliverable-dot"></div>
+          <div class="deliverable-name">Mobile / Web GIS Systems</div>
+          <div class="deliverable-desc">Tablet-ready</div>
+        </div>
+        <div class="deliverable-item">
+          <div class="deliverable-dot"></div>
+          <div class="deliverable-name">Document & Map Scanning</div>
+          <div class="deliverable-desc">Imaging / OCR</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <!-- Visual callout box -->
+      <div style="background:var(--panel); border:1px solid var(--border); padding:36px; margin-bottom:2px;">
+        <div class="section-label" style="margin-bottom:16px;">Large Format Printing</div>
+        <div style="font-family:'Barlow Condensed', sans-serif; font-weight:800; font-size:48px; color:var(--white); line-height:1;">60"<br>WIDE</div>
+        <p style="font-size:13px; color:var(--muted); margin-top:16px; line-height:1.7;">We print and ship large-format maps up to 60 inches wide. Glossy, matte, or archival paper. Same-week turnaround available for most projects.</p>
+      </div>
+      <div style="background:var(--surface); border:1px solid var(--border); padding:28px;">
+        <div class="section-label" style="margin-bottom:16px;">Mapbook Publishing</div>
+        <p style="font-size:13px; color:var(--muted); line-height:1.7;">Full mapbook production — from single-page reference maps to multi-volume county atlases, project status books, and operator map packages.</p>
+      </div>
+      <div style="background:var(--panel); border:1px solid var(--border); border-top:none; padding:24px; display:flex; align-items:center; gap:16px;">
+        <div style="width:48px; height:48px; background:var(--accent); display:flex; align-items:center; justify-content:center; flex-shrink:0; clip-path:polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="#0a0d0f"><path d="M10 2L18 10L10 18L2 10L10 2Z"/></svg>
+        </div>
+        <div>
+          <div style="font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:16px; color:var(--white);">DRONE MAPPING</div>
+          <div style="font-size:12px; color:var(--muted);">Aerial terrain capture, orthomosaic generation, point clouds</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PORTFOLIO STRIP -->
+<section class="portfolio" id="maps">
+  <div class="section-header">
+    <div>
+      <div class="section-label">Example Work</div>
+      <div class="section-title">Map Portfolio</div>
+    </div>
+    <a href="#contact" class="btn-secondary">Request Sample →</a>
+  </div>
+
+  <div class="map-ticker">
+    <!-- Map thumbs with SVG placeholder patterns representing different map types -->
+    <div class="map-thumb">
+      <svg class="map-preview" viewBox="0 0 220 160" xmlns="http://www.w3.org/2000/svg">
+        <rect width="220" height="160" fill="#141c22"/>
+        <rect x="0" y="0" width="220" height="160" fill="url(#grid1)" opacity="0.3"/>
+        <defs>
+          <pattern id="grid1" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1e3040" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+        <path d="M20 80 Q55 60 90 80 T160 75 T210 80" fill="none" stroke="#00c9a7" stroke-width="1.5"/>
+        <path d="M20 90 Q55 70 90 90 T160 85 T210 90" fill="none" stroke="#00c9a7" stroke-width="1"/>
+        <path d="M20 100 Q55 80 90 100 T160 95 T210 100" fill="none" stroke="#4a9eff" stroke-width="1.5"/>
+        <rect x="60" y="50" width="40" height="30" fill="none" stroke="#f5a623" stroke-width="1.5"/>
+        <circle cx="75" cy="62" r="2.5" fill="#f5a623"/>
+        <circle cx="88" cy="70" r="2.5" fill="#f5a623"/>
+        <circle cx="70" cy="75" r="2.5" fill="#f5a623"/>
+      </svg>
+      <div class="map-thumb-label">Seismic Survey — Ohio</div>
+    </div>
+
+    <div class="map-thumb">
+      <svg class="map-preview" viewBox="0 0 220 160">
+        <rect width="220" height="160" fill="#0f1419"/>
+        <path d="M40 140 L40 40 L80 20 L160 40 L160 140 Z" fill="#1a2530" stroke="#243040" stroke-width="1"/>
+        <path d="M40 100 L160 100 M40 80 L160 80 M40 60 L160 60" stroke="#1e3040" stroke-width="0.5"/>
+        <path d="M80 140 L80 20 M120 140 L120 20" stroke="#1e3040" stroke-width="0.5"/>
+        <rect x="55" y="55" width="25" height="18" fill="rgba(0,201,167,0.15)" stroke="#00c9a7" stroke-width="1"/>
+        <rect x="100" y="65" width="35" height="22" fill="rgba(245,166,35,0.1)" stroke="#f5a623" stroke-width="1"/>
+        <path d="M50 120 Q90 115 130 118 T190 120" fill="none" stroke="#4a9eff" stroke-width="2"/>
+      </svg>
+      <div class="map-thumb-label">Unit Map — Barnett Shale</div>
+    </div>
+
+    <div class="map-thumb">
+      <svg class="map-preview" viewBox="0 0 220 160">
+        <rect width="220" height="160" fill="#141c22"/>
+        <path d="M0 40 L220 40 M0 80 L220 80 M0 120 L220 120 M40 0 L40 160 M100 0 L100 160 M160 0 L160 160" stroke="#1e3040" stroke-width="0.5"/>
+        <path d="M0 50 Q30 30 60 50 T120 45 T180 50 T220 48" fill="rgba(74,158,255,0.1)" stroke="#4a9eff" stroke-width="1.5"/>
+        <path d="M0 60 Q30 40 60 60 T120 55 T180 60 T220 58" fill="rgba(74,158,255,0.07)" stroke="#4a9eff" stroke-width="1"/>
+        <path d="M0 70 Q30 50 60 70 T120 65 T180 70 T220 68" fill="rgba(74,158,255,0.04)" stroke="#4a9eff" stroke-width="0.8"/>
+        <circle cx="40" cy="80" r="3" fill="#00c9a7"/>
+        <circle cx="100" cy="80" r="3" fill="#00c9a7"/>
+        <circle cx="160" cy="80" r="3" fill="#00c9a7"/>
+        <line x1="40" y1="80" x2="100" y2="80" stroke="#00c9a7" stroke-width="2"/>
+        <line x1="100" y1="80" x2="160" y2="80" stroke="#00c9a7" stroke-width="2"/>
+      </svg>
+      <div class="map-thumb-label">Pipeline Routing Map</div>
+    </div>
+
+    <div class="map-thumb">
+      <svg class="map-preview" viewBox="0 0 220 160">
+        <rect width="220" height="160" fill="#0f1419"/>
+        <rect x="20" y="20" width="180" height="120" fill="url(#topo)" opacity="0.8"/>
+        <defs>
+          <radialGradient id="topo" cx="50%" cy="50%">
+            <stop offset="0%" stop-color="#f5a623" stop-opacity="0.5"/>
+            <stop offset="30%" stop-color="#00c9a7" stop-opacity="0.4"/>
+            <stop offset="70%" stop-color="#4a9eff" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#1a2530" stop-opacity="0.8"/>
+          </radialGradient>
+        </defs>
+        <ellipse cx="110" cy="80" rx="60" ry="45" fill="none" stroke="#f5a623" stroke-width="1"/>
+        <ellipse cx="110" cy="80" rx="45" ry="33" fill="none" stroke="#f5a623" stroke-width="0.8"/>
+        <ellipse cx="110" cy="80" rx="30" ry="22" fill="none" stroke="#00c9a7" stroke-width="0.8"/>
+        <ellipse cx="110" cy="80" rx="15" ry="11" fill="none" stroke="#00c9a7" stroke-width="1.5"/>
+        <circle cx="110" cy="80" r="3" fill="#00c9a7"/>
+      </svg>
+      <div class="map-thumb-label">DEM Contour Map</div>
+    </div>
+
+    <div class="map-thumb">
+      <svg class="map-preview" viewBox="0 0 220 160">
+        <rect width="220" height="160" fill="#141c22"/>
+        <path d="M0 0 L220 0 L220 160 L0 160 Z" fill="#1a2530"/>
+        <path d="M20 20 L60 20 L60 60 L20 60 Z M70 20 L110 20 L110 60 L70 60 Z M120 20 L160 20 L160 60 L120 60 Z M170 20 L200 20 L200 60 L170 60 Z" fill="none" stroke="#243040" stroke-width="1"/>
+        <path d="M20 70 L60 70 L60 110 L20 110 Z M70 70 L110 70 L110 110 L70 110 Z M120 70 L160 70 L160 110 L120 110 Z M170 70 L200 70 L200 110 L170 110 Z" fill="none" stroke="#243040" stroke-width="1"/>
+        <rect x="20" y="20" width="40" height="40" fill="rgba(0,201,167,0.2)" stroke="#00c9a7" stroke-width="1"/>
+        <rect x="70" y="20" width="40" height="40" fill="rgba(245,166,35,0.15)"/>
+        <rect x="120" y="70" width="40" height="40" fill="rgba(74,158,255,0.2)" stroke="#4a9eff" stroke-width="1"/>
+        <rect x="20" y="70" width="40" height="40" fill="rgba(0,201,167,0.1)"/>
+        <rect x="170" y="70" width="30" height="40" fill="rgba(245,166,35,0.25)" stroke="#f5a623" stroke-width="1"/>
+      </svg>
+      <div class="map-thumb-label">Lease Status Map</div>
+    </div>
+
+    <div class="map-thumb">
+      <svg class="map-preview" viewBox="0 0 220 160">
+        <rect width="220" height="160" fill="#0f1419"/>
+        <circle cx="110" cy="75" r="50" fill="rgba(74,158,255,0.05)" stroke="#4a9eff" stroke-width="1"/>
+        <circle cx="110" cy="75" r="35" fill="rgba(74,158,255,0.05)" stroke="#4a9eff" stroke-width="0.7" stroke-dasharray="4 3"/>
+        <circle cx="110" cy="75" r="20" fill="rgba(74,158,255,0.08)" stroke="#4a9eff" stroke-width="1.5" stroke-dasharray="2 2"/>
+        <circle cx="80" cy="55" r="4" fill="#00c9a7"/>
+        <circle cx="130" cy="45" r="3" fill="#00c9a7" opacity="0.7"/>
+        <circle cx="145" cy="85" r="5" fill="#f5a623"/>
+        <circle cx="90" cy="100" r="3.5" fill="#00c9a7" opacity="0.7"/>
+        <circle cx="110" cy="75" r="7" fill="rgba(74,158,255,0.3)" stroke="#4a9eff" stroke-width="2"/>
+        <line x1="80" y1="55" x2="110" y2="75" stroke="#00c9a7" stroke-width="0.8" stroke-dasharray="3 2"/>
+        <line x1="145" y1="85" x2="110" y2="75" stroke="#f5a623" stroke-width="0.8" stroke-dasharray="3 2"/>
+      </svg>
+      <div class="map-thumb-label">SWD Market Analysis</div>
+    </div>
+  </div>
+</section>
+
+<!-- REGIONAL MAPS -->
+<section class="regional" id="regional">
+  <div class="section-header">
+    <div>
+      <div class="section-label">Published Products</div>
+      <div class="section-title">Regional Map Series</div>
+    </div>
+    <a href="#contact" class="btn-secondary">All Regions →</a>
+  </div>
+
+  <div class="regional-grid">
+    <a href="#contact" class="regional-card">
+      <div class="regional-img-wrap">
+        <svg class="regional-img" viewBox="0 0 400 160" xmlns="http://www.w3.org/2000/svg">
+          <rect width="400" height="160" fill="#0f1419"/>
+          <path d="M0 0 L400 0 L400 160 L0 160 Z" fill="url(#bg1)"/>
+          <defs>
+            <linearGradient id="bg1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#1a2530"/>
+              <stop offset="100%" stop-color="#0f1419"/>
+            </linearGradient>
+          </defs>
+          <path d="M0 40 Q50 20 100 40 T200 35 T300 40 T400 38" fill="rgba(0,201,167,0.1)" stroke="#00c9a7" stroke-width="1"/>
+          <path d="M0 60 Q50 40 100 60 T200 55 T300 60 T400 58" fill="rgba(0,201,167,0.07)" stroke="#00c9a7" stroke-width="0.8"/>
+          <path d="M0 80 Q50 60 100 80 T200 75 T300 80 T400 78" fill="rgba(0,201,167,0.05)" stroke="#4a9eff" stroke-width="1"/>
+          <rect x="80" y="30" width="50" height="35" fill="none" stroke="#f5a623" stroke-width="1.5"/>
+          <rect x="160" y="45" width="60" height="40" fill="rgba(245,166,35,0.08)" stroke="#f5a623" stroke-width="1.5"/>
+          <rect x="240" y="35" width="45" height="30" fill="none" stroke="#f5a623" stroke-width="1"/>
+          <circle cx="100" cy="42" r="2" fill="#f5a623"/>
+          <circle cx="115" cy="52" r="2" fill="#f5a623"/>
+          <circle cx="95" cy="58" r="2" fill="#f5a623"/>
+          <circle cx="185" cy="55" r="2" fill="#f5a623"/>
+          <circle cx="200" cy="68" r="2" fill="#f5a623"/>
+          <circle cx="260" cy="48" r="2" fill="#4a9eff"/>
+          <path d="M20 120 Q100 110 200 115 T380 120" stroke="#607080" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="regional-body">
+        <div class="regional-tag">Updated Quarterly</div>
+        <div class="regional-title">Barnett Shale Unit Map</div>
+        <div class="regional-desc">Authentic original design. Highly detailed down to the parcel. Displays all permitted and producing drilling units in the core Barnett Shale. Covers all active operators and wells.</div>
+      </div>
+    </a>
+
+    <a href="#contact" class="regional-card">
+      <div class="regional-img-wrap">
+        <svg class="regional-img" viewBox="0 0 400 160">
+          <rect width="400" height="160" fill="#0f1419"/>
+          <path d="M0 0 L400 0 L400 160 L0 160 Z" fill="url(#bg2)"/>
+          <defs>
+            <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#1a2020"/>
+              <stop offset="100%" stop-color="#0f1510"/>
+            </linearGradient>
+          </defs>
+          <path d="M20 80 Q80 40 160 80 T320 60 T400 80" fill="rgba(245,166,35,0.08)" stroke="#f5a623" stroke-width="1.5"/>
+          <path d="M20 100 Q80 60 160 100 T320 80 T400 100" fill="rgba(245,166,35,0.05)" stroke="#f5a623" stroke-width="1"/>
+          <rect x="60" y="40" width="70" height="50" fill="rgba(0,201,167,0.1)" stroke="#00c9a7" stroke-width="1.5"/>
+          <rect x="160" y="30" width="90" height="70" fill="rgba(0,201,167,0.06)" stroke="#00c9a7" stroke-width="1"/>
+          <rect x="270" y="50" width="80" height="55" fill="rgba(74,158,255,0.08)" stroke="#4a9eff" stroke-width="1.5"/>
+          <circle cx="95" cy="60" r="2.5" fill="#f5a623"/>
+          <circle cx="110" cy="75" r="2.5" fill="#f5a623"/>
+          <circle cx="80" cy="78" r="2.5" fill="#f5a623"/>
+          <circle cx="200" cy="55" r="2.5" fill="#f5a623"/>
+          <circle cx="220" cy="70" r="2.5" fill="#f5a623"/>
+          <circle cx="300" cy="68" r="2.5" fill="#4a9eff"/>
+          <circle cx="320" cy="80" r="2.5" fill="#4a9eff"/>
+        </svg>
+      </div>
+      <div class="regional-body">
+        <div class="regional-tag">Texas & New Mexico</div>
+        <div class="regional-title">Permian Basin Unit Map</div>
+        <div class="regional-desc">Complete Permian Basin coverage with all active leases, units, wells, and operators. Includes Delaware and Midland sub-basins with formation zones.</div>
+      </div>
+    </a>
+
+    <a href="#contact" class="regional-card">
+      <div class="regional-img-wrap">
+        <svg class="regional-img" viewBox="0 0 400 160">
+          <rect width="400" height="160" fill="#0f1419"/>
+          <path d="M0 0 L400 0 L400 160 L0 160 Z" fill="url(#bg3)"/>
+          <defs>
+            <linearGradient id="bg3" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#0f1520"/>
+              <stop offset="100%" stop-color="#1a1a30"/>
+            </linearGradient>
+          </defs>
+          <path d="M0 50 Q100 20 200 50 T400 40" fill="rgba(74,158,255,0.12)" stroke="#4a9eff" stroke-width="1.5"/>
+          <path d="M0 70 Q100 40 200 70 T400 60" fill="rgba(74,158,255,0.08)" stroke="#4a9eff" stroke-width="1"/>
+          <path d="M0 90 Q100 60 200 90 T400 80" fill="rgba(74,158,255,0.06)" stroke="#4a9eff" stroke-width="0.8"/>
+          <path d="M50 140 L50 20 M110 140 L110 20 M170 140 L170 20 M230 140 L230 20 M290 140 L290 20 M350 140 L350 20" stroke="#1e2d3a" stroke-width="0.6"/>
+          <rect x="70" y="35" width="55" height="40" fill="rgba(0,201,167,0.12)" stroke="#00c9a7" stroke-width="1.5"/>
+          <rect x="140" y="45" width="65" height="45" fill="rgba(0,201,167,0.08)" stroke="#00c9a7" stroke-width="1"/>
+          <rect x="230" y="38" width="50" height="38" fill="rgba(245,166,35,0.08)" stroke="#f5a623" stroke-width="1.5"/>
+          <circle cx="88" cy="52" r="2.5" fill="#00c9a7"/>
+          <circle cx="103" cy="65" r="2.5" fill="#00c9a7"/>
+          <circle cx="165" cy="60" r="2.5" fill="#00c9a7"/>
+          <circle cx="180" cy="72" r="2.5" fill="#4a9eff"/>
+          <circle cx="250" cy="55" r="2.5" fill="#f5a623"/>
+        </svg>
+      </div>
+      <div class="regional-body">
+        <div class="regional-tag">Ohio — Quarterly Update</div>
+        <div class="regional-title">Utica / Marcellus Shale Map</div>
+        <div class="regional-desc">Coverage across Belmont, Carroll, Guernsey, Harrison, Jefferson, Noble, Monroe, and Washington counties. Includes surface/bottom/lateral wells with operator logos.</div>
+      </div>
+    </a>
+
+    <a href="#contact" class="regional-card">
+      <div class="regional-img-wrap">
+        <svg class="regional-img" viewBox="0 0 400 160">
+          <rect width="400" height="160" fill="#0f1419"/>
+          <path d="M0 0 L400 0 L400 160 L0 160 Z" fill="url(#bg4)"/>
+          <defs>
+            <linearGradient id="bg4" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#1a2020"/>
+              <stop offset="100%" stop-color="#101520"/>
+            </linearGradient>
+          </defs>
+          <ellipse cx="150" cy="80" rx="100" ry="55" fill="rgba(0,201,167,0.06)" stroke="#00c9a7" stroke-width="1.5"/>
+          <ellipse cx="150" cy="80" rx="75" ry="40" fill="rgba(0,201,167,0.05)" stroke="#00c9a7" stroke-width="1"/>
+          <ellipse cx="150" cy="80" rx="50" ry="27" fill="rgba(245,166,35,0.08)" stroke="#f5a623" stroke-width="1.5"/>
+          <circle cx="150" cy="80" r="12" fill="rgba(245,166,35,0.2)" stroke="#f5a623" stroke-width="2"/>
+          <circle cx="150" cy="80" r="5" fill="#f5a623"/>
+          <path d="M280 30 Q320 50 360 40 T400 50" fill="none" stroke="#4a9eff" stroke-width="1"/>
+          <path d="M280 50 Q320 70 360 60 T400 70" fill="none" stroke="#4a9eff" stroke-width="0.8"/>
+          <circle cx="300" cy="65" r="3" fill="#4a9eff" opacity="0.7"/>
+          <circle cx="340" cy="55" r="3" fill="#4a9eff" opacity="0.7"/>
+          <circle cx="370" cy="75" r="3" fill="#4a9eff" opacity="0.7"/>
+        </svg>
+      </div>
+      <div class="regional-body">
+        <div class="regional-tag">Mid-Continent</div>
+        <div class="regional-title">Eagle Ford Unit Map</div>
+        <div class="regional-desc">Eagle Ford Shale complete unit and well coverage. Detailed operator boundaries, lateral direction, and formation zones from the oil, condensate, and gas windows.</div>
+      </div>
+    </a>
+
+    <a href="#contact" class="regional-card">
+      <div class="regional-img-wrap">
+        <svg class="regional-img" viewBox="0 0 400 160">
+          <rect width="400" height="160" fill="#0f1419"/>
+          <path d="M0 0 L400 0 L400 160 L0 160 Z" fill="url(#bg5)"/>
+          <defs>
+            <linearGradient id="bg5" x1="100%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#1a1520"/>
+              <stop offset="100%" stop-color="#0f1520"/>
+            </linearGradient>
+          </defs>
+          <!-- Seismic line representation -->
+          <path d="M20 80 L40 70 L60 85 L80 65 L100 80 L120 60 L140 80 L160 70 L180 85 L200 65 L220 80 L240 60 L260 80 L280 70 L300 80 L320 65 L340 80 L360 70 L380 80" fill="none" stroke="#4a9eff" stroke-width="1.5"/>
+          <path d="M20 100 L40 90 L60 105 L80 85 L100 100 L120 80 L140 100 L160 90 L180 105 L200 85 L220 100 L240 80 L260 100 L280 90 L300 100 L320 85 L340 100 L360 90 L380 100" fill="none" stroke="#4a9eff" stroke-width="1" opacity="0.6"/>
+          <path d="M20 60 L40 50 L60 65 L80 45 L100 60 L120 40 L140 60 L160 50 L180 65 L200 45 L220 60 L240 40 L260 60 L280 50 L300 60 L320 45 L340 60 L360 50 L380 60" fill="none" stroke="#4a9eff" stroke-width="0.7" opacity="0.4"/>
+          <rect x="90" y="55" width="80" height="55" fill="rgba(0,201,167,0.08)" stroke="#00c9a7" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <rect x="250" y="40" width="100" height="70" fill="rgba(245,166,35,0.06)" stroke="#f5a623" stroke-width="1.5" stroke-dasharray="4 3"/>
+        </svg>
+      </div>
+      <div class="regional-body">
+        <div class="regional-tag">3D & 2D Programs</div>
+        <div class="regional-title">Seismic Program Maps</div>
+        <div class="regional-desc">Public and private ownership maps, pre/post-plot survey mapping, environmental species and habitat, GPS field hazard mapping, and permit databases.</div>
+      </div>
+    </a>
+
+    <a href="#contact" class="regional-card">
+      <div class="regional-img-wrap">
+        <svg class="regional-img" viewBox="0 0 400 160">
+          <rect width="400" height="160" fill="#0f1419"/>
+          <path d="M0 0 L400 0 L400 160 L0 160 Z" fill="url(#bg6)"/>
+          <defs>
+            <linearGradient id="bg6" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#1a2015"/>
+              <stop offset="100%" stop-color="#0f1515"/>
+            </linearGradient>
+          </defs>
+          <!-- Township/Range grid -->
+          <path d="M40 10 L40 150 M80 10 L80 150 M120 10 L120 150 M160 10 L160 150 M200 10 L200 150 M240 10 L240 150 M280 10 L280 150 M320 10 L320 150 M360 10 L360 150" stroke="#1e3020" stroke-width="0.7"/>
+          <path d="M0 30 L400 30 M0 60 L400 60 M0 90 L400 90 M0 120 L400 120 M0 150 L400 150" stroke="#1e3020" stroke-width="0.7"/>
+          <!-- Highlighted sections -->
+          <rect x="40" y="30" width="40" height="30" fill="rgba(0,201,167,0.2)"/>
+          <rect x="80" y="30" width="40" height="30" fill="rgba(0,201,167,0.12)"/>
+          <rect x="80" y="60" width="40" height="30" fill="rgba(0,201,167,0.2)"/>
+          <rect x="120" y="60" width="40" height="30" fill="rgba(245,166,35,0.15)"/>
+          <rect x="160" y="30" width="40" height="60" fill="rgba(74,158,255,0.12)"/>
+          <rect x="240" y="90" width="40" height="30" fill="rgba(0,201,167,0.18)"/>
+          <rect x="280" y="60" width="80" height="30" fill="rgba(245,166,35,0.12)"/>
+          <!-- Text labels placeholder lines -->
+          <line x1="45" y1="45" x2="75" y2="45" stroke="#607080" stroke-width="0.5"/>
+          <line x1="85" y1="42" x2="115" y2="42" stroke="#607080" stroke-width="0.5"/>
+          <line x1="85" y1="72" x2="115" y2="72" stroke="#607080" stroke-width="0.5"/>
+        </svg>
+      </div>
+      <div class="regional-body">
+        <div class="regional-tag">Jeffersonian Grid</div>
+        <div class="regional-title">Township & Range Maps</div>
+        <div class="regional-desc">Metes & bounds and Jeffersonian (Section-Township-Range) mapping, preliminary plats, parcel/cadastral mapping, and county-level land grid products.</div>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- CTA / CONTACT -->
+<section class="cta-section" id="contact">
+  <div class="cta-content">
+    <div class="section-label" style="justify-content:center; display:flex; margin-bottom:16px;">Let's Work Together</div>
+    <h2 class="cta-title">Ready to Map<br>Your World?</h2>
+    <p class="cta-sub">Tell us about your project. We respond within 24 hours with a quote, sample data, or a call to discuss your needs.</p>
+
+    <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:32px;">
+      <div class="cta-form">
+        <input type="text" class="cta-input" placeholder="Your name or company">
+        <input type="email" class="cta-input" placeholder="Email address" style="border-left: 1px solid var(--border); border-right: none;">
+        <button class="cta-btn">Send →</button>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:center; gap:40px; flex-wrap:wrap; margin-top:40px;">
+      <div style="text-align:center;">
+        <div style="font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); margin-bottom:4px;">PHONE</div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:16px; color:var(--text);">(817) 000-0000</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); margin-bottom:4px;">EMAIL</div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:16px; color:var(--text);">info@geocoresolutions.com</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); margin-bottom:4px;">BASED IN</div>
+        <div style="font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:16px; color:var(--text);">Fort Worth, TX</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+        <div class="logo-text">GeoCore</div>
+        <div class="logo-sub" style="margin:0;">Spatial Solutions</div>
+      </div>
+      <p>Precision GIS services for oil & gas, energy, real estate, and government clients. Custom mapping, spatial analysis, and geospatial application development.</p>
+    </div>
+
+    <div class="footer-col">
+      <h4>Services</h4>
+      <ul>
+        <li><a href="#">Custom Mapping</a></li>
+        <li><a href="#">Oil & Gas GIS</a></li>
+        <li><a href="#">Pipeline Mapping</a></li>
+        <li><a href="#">Web Applications</a></li>
+        <li><a href="#">Survey & Collection</a></li>
+        <li><a href="#">3D Visualization</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4>Products</h4>
+      <ul>
+        <li><a href="#">Barnett Shale Map</a></li>
+        <li><a href="#">Permian Basin Map</a></li>
+        <li><a href="#">Eagle Ford Map</a></li>
+        <li><a href="#">Utica Shale Map</a></li>
+        <li><a href="#">Marcellus Map</a></li>
+        <li><a href="#">Township Maps</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <h4>Deliverables</h4>
+      <ul>
+        <li><a href="#">PDF Maps</a></li>
+        <li><a href="#">Shapefiles</a></li>
+        <li><a href="#">Geodatabases</a></li>
+        <li><a href="#">KML / KMZ</a></li>
+        <li><a href="#">ArcGIS Online</a></li>
+        <li><a href="#">Mobile GIS</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <p>© 2026 GeoCore Spatial Solutions — All Rights Reserved</p>
+    <span class="footer-coords">32.7767° N, 97.2972° W — Fort Worth, TX</span>
+  </div>
+</footer>
+
+<script>
+  // Animate in sections as they scroll into view
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.querySelectorAll('.service-card, .category-cell, .deliverable-item, .regional-card, .map-thumb').forEach((el, i) => {
+          setTimeout(() => {
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+          }, i * 60);
+        });
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('section').forEach(section => {
+    section.querySelectorAll('.service-card, .category-cell, .deliverable-item, .regional-card, .map-thumb').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(20px)';
+      el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    });
+    observer.observe(section);
+  });
+
+  // Update coordinates in topbar dynamically
+  const coordEl = document.querySelector('.coords');
+  const lats = ['32.7767', '36.1539', '29.7604', '35.4676', '30.2672'];
+  const lngs = ['97.2972', '95.9928', '95.3698', '97.5164', '97.7431'];
+  const cities = ['Fort Worth, TX', 'Tulsa, OK', 'Houston, TX', 'Oklahoma City, OK', 'Austin, TX'];
+  let idx = 0;
+  setInterval(() => {
+    idx = (idx + 1) % lats.length;
+    // just flicker the dot
+  }, 3000);
+</script>
+
+</body>
+</html>
